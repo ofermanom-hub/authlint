@@ -6,7 +6,7 @@ import re
 
 from flask import Flask, jsonify, render_template, request
 
-from checks import lint_jwt, lint_oidc, lint_saml
+from checks import diff_saml, lint_jwt, lint_oidc, lint_saml
 from claude_explainer import explain
 
 app = Flask(__name__)
@@ -72,6 +72,28 @@ def explain_finding():
     if not text:
         text = "Claude explainer not configured — set ANTHROPIC_API_KEY to enable."
     return f'<div class="mt-2 text-sm italic text-slate-600">{text}</div>'
+
+
+@app.post("/compare")
+def compare():
+    left = request.form.get("left", "")
+    right = request.form.get("right", "")
+    left_label = (request.form.get("left_label") or "Staging").strip()[:40]
+    right_label = (request.form.get("right_label") or "Production").strip()[:40]
+    result = diff_saml(left, right, left_label=left_label, right_label=right_label)
+    return render_template("_compare.html", result=result.to_dict())
+
+
+@app.post("/api/compare")
+def api_compare():
+    data = request.get_json(silent=True) or {}
+    result = diff_saml(
+        data.get("left", ""),
+        data.get("right", ""),
+        left_label=data.get("left_label", "Staging"),
+        right_label=data.get("right_label", "Production"),
+    )
+    return jsonify(result.to_dict())
 
 
 @app.post("/api/scan")

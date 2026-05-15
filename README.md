@@ -28,6 +28,7 @@ AuthLint is the tool I wished customers had run *before* the kickoff meeting.
 | **SAML metadata** | Cert expiry & key size, signing/digest algorithm strength, SSO/SLO endpoints & bindings, NameIDFormat, AuthnRequestsSigned / WantAssertionsSigned posture, AttributeStatement coverage |
 | **JWT** | `alg: none`, HMAC for cross-org tokens, missing `iss`/`aud`/`exp`, oversized lifetime, missing `kid` (rotation hygiene) |
 | **OIDC discovery** | Deprecated implicit/ROPC flows, missing PKCE, weak `id_token` algorithms, JWKS reachability + key rotation, HTTPS posture on every endpoint |
+| **SAML drift** | Paste *two* metadata files (staging vs prod). Side-by-side diff of entityID, certs, endpoints, NameIDFormat, signing posture, attributes — the artefact a TAM produces in week 1 of triage |
 
 Each finding has a severity (`critical` → `ok`), a plain explanation, and a concrete fix. Tap **Explain →** to get a 2-sentence summary from Claude.
 
@@ -67,7 +68,7 @@ curl -s https://authlint.onrender.com/api/scan \
 
 ## Roadmap
 
-- [ ] "Compare two SAML metadata files" — staging-vs-prod drift detector (TAM flavour)
+- [x] "Compare two SAML metadata files" — staging-vs-prod drift detector (TAM flavour)
 - [ ] Browser extension that lints the current site's `/.well-known/openid-configuration`
 - [ ] Markdown export of the report for tickets/Confluence
 - [ ] Configurable severity thresholds for CI gating

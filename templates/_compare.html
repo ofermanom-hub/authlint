@@ -1,0 +1,64 @@
+{% if result.error %}
+  <div class="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
+    <strong>Could not compare:</strong> {{ result.error }}
+  </div>
+{% else %}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h2 class="text-lg font-semibold">
+        Drift report
+        <span class="text-sm text-slate-500 font-normal">
+          ({{ result.diffs|length }} difference{{ '' if result.diffs|length == 1 else 's' }})
+        </span>
+      </h2>
+      <div class="text-xs text-slate-500">
+        <span class="font-semibold">{{ result.left_summary.label }}</span> vs
+        <span class="font-semibold">{{ result.right_summary.label }}</span>
+      </div>
+    </div>
+
+    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+      {% for side in [result.left_summary, result.right_summary] %}
+        <div class="border rounded-lg p-3 border-slate-200">
+          <div class="font-semibold text-slate-700 mb-1">{{ side.label }}</div>
+          <dl class="space-y-0.5">
+            {% for k, v in side.items() if k != 'label' %}
+              <div class="flex gap-2">
+                <dt class="text-slate-500 shrink-0">{{ k }}:</dt>
+                <dd class="text-slate-800 break-all">{{ v }}</dd>
+              </div>
+            {% endfor %}
+          </dl>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if result.diffs %}
+      <ul class="mt-5 space-y-3">
+        {% for d in result.diffs %}
+          <li class="border rounded-lg p-3 sev-{{ d.severity }}">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="inline-block text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-white/60 border border-current">{{ d.severity }}</span>
+              <span class="font-semibold font-mono text-sm">{{ d.field }}</span>
+            </div>
+            {% if d.note %}<p class="mt-1 text-sm">{{ d.note }}</p>{% endif %}
+            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+              <div class="bg-white/60 rounded p-2 break-all">
+                <div class="text-[10px] uppercase font-bold opacity-60 mb-1">{{ result.left_summary.label }}</div>
+                <div>{{ d.left }}</div>
+              </div>
+              <div class="bg-white/60 rounded p-2 break-all">
+                <div class="text-[10px] uppercase font-bold opacity-60 mb-1">{{ result.right_summary.label }}</div>
+                <div>{{ d.right }}</div>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-5 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-3">
+        ✓ No drift detected across the compared fields. Both environments are aligned.
+      </p>
+    {% endif %}
+  </div>
+{% endif %}

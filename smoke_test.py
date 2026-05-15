@@ -9,7 +9,7 @@ import subprocess
 import sys
 import textwrap
 
-from checks import lint_jwt, lint_oidc, lint_saml
+from checks import diff_saml, lint_jwt, lint_oidc, lint_saml
 
 
 def _ok(label: str) -> None:
@@ -94,9 +94,59 @@ def test_oidc_live() -> None:
         _fail("no issuer", json.dumps(r, indent=2))
 
 
+SAML_STAGING = """<?xml version="1.0"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://app.example.com">
+  <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"
+                   AuthnRequestsSigned="true" WantAssertionsSigned="true">
+    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                              Location="https://staging.example.com/acs"/>
+    <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
+  </SPSSODescriptor>
+</EntityDescriptor>"""
+
+SAML_PROD = """<?xml version="1.0"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://app.example.com">
+  <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"
+                   AuthnRequestsSigned="false" WantAssertionsSigned="true">
+    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                              Location="https://prod.example.com/acs"/>
+    <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>
+  </SPSSODescriptor>
+</EntityDescriptor>"""
+
+
+def test_saml_diff() -> None:
+    print("SAML diff — staging vs prod")
+    r = diff_saml(SAML_STAGING, SAML_PROD).to_dict()
+    fields = {d["field"] for d in r["diffs"]}
+    if "endpoints.AssertionConsumerService" in fields:
+        _ok("flagged ACS endpoint drift")
+    else:
+        _fail("missed ACS endpoint diff", json.dumps(r, indent=2))
+    if "nameid_formats" in fields:
+        _ok("flagged NameIDFormat drift")
+    else:
+        _fail("missed NameIDFormat diff", json.dumps(r, indent=2))
+    if "AuthnRequestsSigned" in fields:
+        _ok("flagged signing-posture drift")
+    else:
+        _fail("missed signing-posture diff", json.dumps(r, indent=2))
+
+
+def test_saml_diff_identical() -> None:
+    print("SAML diff — identical inputs")
+    r = diff_saml(SAML_STAGING, SAML_STAGING).to_dict()
+    if not r["diffs"]:
+        _ok("no diffs for identical inputs")
+    else:
+        _fail("false-positive diffs", json.dumps(r, indent=2))
+
+
 if __name__ == "__main__":
     test_jwt_alg_none()
     test_jwt_typical()
     test_saml_basic()
     test_oidc_live()
+    test_saml_diff()
+    test_saml_diff_identical()
     print("\n\033[32mAll smoke checks passed.\033[0m")
