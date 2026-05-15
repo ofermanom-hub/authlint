@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AuthLint — Linter for SAML, JWT &amp; OIDC</title>
+  <meta name="description" content="Paste your SAML metadata, JWT, or OIDC discovery URL. Get a senior-implementer's review in 5 seconds.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>🔐</text></svg>">
+  <style>
+    .sev-critical { @apply bg-red-100 text-red-800 border-red-300; }
+    .sev-high     { @apply bg-orange-100 text-orange-800 border-orange-300; }
+    .sev-medium   { @apply bg-yellow-100 text-yellow-800 border-yellow-300; }
+    .sev-low      { @apply bg-blue-100 text-blue-800 border-blue-300; }
+    .sev-info     { @apply bg-slate-100 text-slate-700 border-slate-300; }
+    .sev-ok       { @apply bg-emerald-100 text-emerald-800 border-emerald-300; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <header class="max-w-4xl mx-auto px-5 pt-10 pb-6">
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">🔐 AuthLint</h1>
+    <p class="mt-2 text-slate-600 max-w-2xl">
+      A linter for enterprise auth configs. Paste your <strong>SAML metadata</strong>,
+      a <strong>JWT</strong>, or an <strong>OIDC discovery URL</strong> — get a
+      15-year-implementation-veteran's review in 5 seconds.
+    </p>
+    <p class="mt-1 text-xs text-slate-500">
+      Nothing is stored. Inputs are processed in-memory only.
+    </p>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-5 pb-20">
+    <form
+      hx-post="/scan"
+      hx-target="#result"
+      hx-indicator="#spinner"
+      class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5"
+    >
+      <div class="flex items-center gap-3 mb-3">
+        <label class="text-sm font-medium text-slate-700">Input type</label>
+        <select name="kind" class="border-slate-300 border rounded-md px-2 py-1 text-sm">
+          <option value="auto">Auto-detect</option>
+          <option value="saml">SAML metadata (XML)</option>
+          <option value="jwt">JWT</option>
+          <option value="oidc">OIDC issuer / discovery URL</option>
+        </select>
+      </div>
+      <textarea
+        name="payload"
+        rows="10"
+        placeholder="Paste SAML EntityDescriptor XML, a JWT (eyJhbGciOi...), or https://issuer/.well-known/openid-configuration"
+        class="w-full font-mono text-xs sm:text-sm border border-slate-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        required
+      ></textarea>
+      <div class="mt-3 flex items-center gap-3">
+        <button
+          type="submit"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-md"
+        >Lint it</button>
+        <span id="spinner" class="htmx-indicator text-sm text-slate-500">Scanning…</span>
+        <span class="ml-auto text-xs text-slate-400">Findings sorted critical → ok</span>
+      </div>
+    </form>
+
+    <section id="result" class="mt-6"></section>
+
+    <section class="mt-12 text-sm text-slate-600 space-y-3">
+      <h2 class="font-semibold text-slate-800">What it checks</h2>
+      <ul class="list-disc list-inside space-y-1">
+        <li><strong>SAML:</strong> cert expiry &amp; key size, signing/digest algorithm, SSO/SLO endpoints, NameID format, signing posture (AuthnRequestsSigned, WantAssertionsSigned), attribute coverage.</li>
+        <li><strong>JWT:</strong> <code>alg: none</code> &amp; HMAC misuse, missing standard claims, lifetime sanity, <code>kid</code> rotation hygiene.</li>
+        <li><strong>OIDC:</strong> deprecated implicit/ROPC flows, PKCE support, <code>id_token</code> signing alg, JWKS reachability + key rotation, HTTPS posture.</li>
+      </ul>
+      <p class="pt-3 text-xs text-slate-500">
+        Built by <a href="https://www.linkedin.com/in/ofer-sadeh-man-60346582/" class="underline">Ofer Sadeh Man</a> — 15+ years implementing enterprise SSO at DocuSign, Tipalti, ClickSoftware/Salesforce.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

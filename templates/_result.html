@@ -1,0 +1,58 @@
+{% if result.error %}
+  <div class="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
+    <strong>Could not lint:</strong> {{ result.error }}
+  </div>
+{% else %}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h2 class="text-lg font-semibold">
+        {{ result.kind|upper }} report
+        <span class="text-sm text-slate-500 font-normal">({{ result.findings|length }} findings)</span>
+      </h2>
+    </div>
+
+    {% if result.summary %}
+      <details class="mt-3" open>
+        <summary class="cursor-pointer text-sm text-slate-600 font-medium">Summary</summary>
+        <dl class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs">
+          {% for k, v in result.summary.items() %}
+            <div class="flex gap-2">
+              <dt class="text-slate-500 shrink-0">{{ k }}:</dt>
+              <dd class="text-slate-800 break-all">{{ v }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+      </details>
+    {% endif %}
+
+    <ul class="mt-5 space-y-3">
+      {% for f in result.findings %}
+        <li class="border rounded-lg p-3 sev-{{ f.severity }}">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <span class="inline-block text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-white/60 border border-current">{{ f.severity }}</span>
+              <span class="ml-2 font-semibold">{{ f.title }}</span>
+            </div>
+            <button
+              class="text-xs underline hover:no-underline"
+              hx-post="/explain"
+              hx-vals='{"kind": "{{ result.kind }}", "id": "{{ f.id }}", "title": {{ f.title|tojson }}, "detail": {{ f.detail|tojson }}}'
+              hx-target="next .explain-target"
+              hx-swap="innerHTML"
+            >Explain →</button>
+          </div>
+          <p class="mt-1 text-sm">{{ f.detail }}</p>
+          {% if f.suggestion %}
+            <p class="mt-1 text-sm"><strong>Fix:</strong> {{ f.suggestion }}</p>
+          {% endif %}
+          {% if f.evidence %}
+            <p class="mt-1 text-xs font-mono break-all opacity-75">{{ f.evidence }}</p>
+          {% endif %}
+          <div class="explain-target"></div>
+        </li>
+      {% else %}
+        <li class="text-sm text-slate-500">No findings.</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
