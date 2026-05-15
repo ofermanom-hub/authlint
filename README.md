@@ -2,8 +2,10 @@
 
 > A linter for enterprise auth configs. Paste your **SAML metadata**, a **JWT**, or an **OIDC discovery URL** — get a 15-year-implementation-veteran's review in 5 seconds.
 
-**Live demo:** _(deploy & paste URL here)_
+**Live demo:** _(coming once Render finishes the first build)_
 **Built by:** [Ofer Sadeh Man](https://www.linkedin.com/in/ofer-sadeh-man-60346582/)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ofermanom-hub/authlint)
 
 ---
 
